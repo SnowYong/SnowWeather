@@ -1,2 +1,2 @@
 # SnowWeather
-An android app showing China's weather
+An android app showing China's weather.
