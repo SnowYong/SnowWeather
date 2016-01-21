@@ -2,7 +2,10 @@ package com.snow.app.snowweather.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -52,6 +55,15 @@ public class ChooseAreaActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sharedPreferences.getBoolean("city_selected", false))
+        {
+            Intent intent = new Intent(ChooseAreaActivity.this, WeatherInfoActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.choose_area_activity);
 
@@ -71,6 +83,12 @@ public class ChooseAreaActivity extends Activity {
                 } else if (current_level == CITY_LEVEL) {
                     select_city = cityList.get(position);
                     queryCounty();
+                }
+                else if (current_level == COUNTY_LEVEL)
+                {
+                    String county_code = countyList.get(position).getCounty_code();
+                    WeatherInfoActivity.intentStartActivity(ChooseAreaActivity.this, county_code);
+                    finish();
                 }
             }
         });

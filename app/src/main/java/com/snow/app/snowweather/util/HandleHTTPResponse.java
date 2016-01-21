@@ -1,5 +1,8 @@
 package com.snow.app.snowweather.util;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import com.snow.app.snowweather.db.SnowWeatherDB;
@@ -7,10 +10,15 @@ import com.snow.app.snowweather.model.City;
 import com.snow.app.snowweather.model.County;
 import com.snow.app.snowweather.model.Province;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Administrator on 2016.01.16.
@@ -143,6 +151,43 @@ public class HandleHTTPResponse {
         }
 
         return false;
+    }
+
+    public static boolean handleWeatherResponse(Context context, String response) {
+        try {
+            if (!TextUtils.isEmpty(response)) {
+                JSONObject jsonObject = new JSONObject(response);
+                JSONObject weatherJson = jsonObject.getJSONObject("weatherinfo");
+                String city_name = weatherJson.getString("city");
+                String weather_code = weatherJson.getString("cityid");
+                String weather_temp1 = weatherJson.getString("temp1");
+                String weather_temp2 = weatherJson.getString("temp2");
+                String weather_desp = weatherJson.getString("weather");
+                String weather_ptime = weatherJson.getString("ptime");
+                saveWeatherInfo(context, city_name, weather_code, weather_temp1, weather_temp2,
+                        weather_desp, weather_ptime);
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
+    private static void saveWeatherInfo(Context context, String city_name, String weather_code, String weather_temp1, String weather_temp2, String weather_desp, String weather_ptime) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年M月d日", Locale.CHINA);
+        SharedPreferences.Editor editor = PreferenceManager
+                .getDefaultSharedPreferences(context).edit();
+        editor.putString("city_name", city_name);
+        editor.putString("weather_code", weather_code);
+        editor.putString("weather_temp1", weather_temp1);
+        editor.putString("weather_temp2", weather_temp2);
+        editor.putString("weather_desp", weather_desp);
+        editor.putString("weather_ptime", weather_ptime);
+        editor.putString("weather_current_data", simpleDateFormat.format(new Date()));
+        editor.putBoolean("city_selected", true);
+        editor.commit();
     }
 
 }
