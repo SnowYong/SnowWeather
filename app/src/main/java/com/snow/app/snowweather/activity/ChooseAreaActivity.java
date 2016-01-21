@@ -2,6 +2,7 @@ package com.snow.app.snowweather.activity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -56,8 +57,8 @@ public class ChooseAreaActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (sharedPreferences.getBoolean("city_selected", false))
-        {
+        boolean is_from_weather = getIntent().getBooleanExtra("is_from_weather", false);
+        if (sharedPreferences.getBoolean("city_selected", false) && !is_from_weather) {
             Intent intent = new Intent(ChooseAreaActivity.this, WeatherInfoActivity.class);
             startActivity(intent);
             finish();
@@ -83,11 +84,9 @@ public class ChooseAreaActivity extends Activity {
                 } else if (current_level == CITY_LEVEL) {
                     select_city = cityList.get(position);
                     queryCounty();
-                }
-                else if (current_level == COUNTY_LEVEL)
-                {
+                } else if (current_level == COUNTY_LEVEL) {
                     String county_code = countyList.get(position).getCounty_code();
-                    WeatherInfoActivity.intentStartActivity(ChooseAreaActivity.this, county_code);
+                    WeatherInfoActivity.startWeatherActivity(ChooseAreaActivity.this, county_code);
                     finish();
                 }
             }
@@ -191,6 +190,8 @@ public class ChooseAreaActivity extends Activity {
                     public void run() {
                         closeProgressDialog();
                         Toast.makeText(ChooseAreaActivity.this, "加载失败,请检查网络设置", Toast.LENGTH_SHORT).show();
+                        snowWeatherDB.cleanCity();
+                        queryProvince();
                     }
                 });
             }
@@ -223,5 +224,11 @@ public class ChooseAreaActivity extends Activity {
         } else {
             finish();
         }
+    }
+
+    public static void startChooseAreaActivity(Context context, boolean is_from_weather) {
+        Intent intent = new Intent(context, ChooseAreaActivity.class);
+        intent.putExtra("is_from_weather", is_from_weather);
+        context.startActivity(intent);
     }
 }

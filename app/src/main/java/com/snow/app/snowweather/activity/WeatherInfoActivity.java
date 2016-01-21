@@ -9,10 +9,12 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.snow.app.snowweather.R;
+import com.snow.app.snowweather.db.SnowWeatherDB;
 import com.snow.app.snowweather.util.HTTPCallBackListener;
 import com.snow.app.snowweather.util.HTTPUtil;
 import com.snow.app.snowweather.util.HandleHTTPResponse;
@@ -20,10 +22,13 @@ import com.snow.app.snowweather.util.HandleHTTPResponse;
 /**
  * Created by Administrator on 2016.01.18.
  */
-public class WeatherInfoActivity extends Activity {
+public class WeatherInfoActivity extends Activity implements View.OnClickListener {
     private LinearLayout weather_info_layout;
     private TextView weather_name_textview, weather_ptime_textview, weather_current_date,
             weather_desp_textview, weather_temp1_textview, weather_temp2_textview;
+    private ImageButton weather_rechoose_btn, weather_update_btn;
+
+    private SnowWeatherDB snowWeatherDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +36,7 @@ public class WeatherInfoActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.weather_info_activity);
 
+        snowWeatherDB = SnowWeatherDB.getInstance(this);
         weather_name_textview = (TextView) findViewById(R.id.weather_name_textview);
         weather_ptime_textview = (TextView) findViewById(R.id.weather_ptime_textview);
         weather_info_layout = (LinearLayout) findViewById(R.id.weather_info_layout);
@@ -38,6 +44,10 @@ public class WeatherInfoActivity extends Activity {
         weather_desp_textview = (TextView) findViewById(R.id.weather_desp_textview);
         weather_temp1_textview = (TextView) findViewById(R.id.weather_temp1_textview);
         weather_temp2_textview = (TextView) findViewById(R.id.weather_temp2_textview);
+        weather_rechoose_btn = (ImageButton) findViewById(R.id.weather_rechoose_btn);
+        weather_update_btn = (ImageButton) findViewById(R.id.weather_update_btn);
+        weather_rechoose_btn.setOnClickListener(this);
+        weather_update_btn.setOnClickListener(this);
 
         String county_code = getIntent().getStringExtra("county_code");
         if (!TextUtils.isEmpty(county_code)) {
@@ -48,7 +58,6 @@ public class WeatherInfoActivity extends Activity {
         } else {
             showWeather();
         }
-
     }
 
     private void queryWeatherInfo(final String code) {
@@ -94,9 +103,35 @@ public class WeatherInfoActivity extends Activity {
         weather_info_layout.setVisibility(View.VISIBLE);
     }
 
-    public static void intentStartActivity(Context context, String county_code) {
+    public static void startWeatherActivity(Context context, String county_code) {
         Intent intent = new Intent(context, WeatherInfoActivity.class);
         intent.putExtra("county_code", county_code);
         context.startActivity(intent);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.weather_rechoose_btn:
+                ChooseAreaActivity.startChooseAreaActivity(WeatherInfoActivity.this, true);
+                snowWeatherDB.cleanCity();
+                snowWeatherDB.cleanCounty();
+                finish();
+                break;
+            case R.id.weather_update_btn:
+                updateWeatherWithTouchingHand();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void updateWeatherWithTouchingHand() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String county_code = sharedPreferences.getString("weather_code", "");
+        weather_name_textview.setVisibility(View.INVISIBLE);
+        weather_info_layout.setVisibility(View.INVISIBLE);
+        weather_ptime_textview.setText("正在同步中...");
+        queryWeatherInfo(county_code);
     }
 }
