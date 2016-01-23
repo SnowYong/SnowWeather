@@ -74,7 +74,8 @@ public class SnowWeatherDB {
 
     public List<City> loadCity(int province_id) {
         List<City> cityList = new ArrayList<City>();
-        Cursor cursor = sqLiteDatabase.query("City", null, null, null, null, null, null);
+        Cursor cursor = sqLiteDatabase.query("City", null, "province_id = ?",
+                new String[]{String.valueOf(province_id)}, null, null, null);
 
         if (cursor.moveToFirst()) {
             do {
@@ -91,10 +92,6 @@ public class SnowWeatherDB {
         return cityList;
     }
 
-    public void cleanCity()
-    {
-        sqLiteDatabase.delete("City", null, null);
-    }
 
     public void saveCounty(County county) {
         if (county != null) {
@@ -108,7 +105,8 @@ public class SnowWeatherDB {
 
     public List<County> loadCounty(int city_id) {
         List<County> countyList = new ArrayList<County>();
-        Cursor cursor = sqLiteDatabase.query("County", null, null, null, null, null, null);
+        Cursor cursor = sqLiteDatabase.query("County", null, "city_id = ?",
+                new String[]{String.valueOf(city_id)}, null, null, null);
 
         if (cursor.moveToFirst()) {
             do {
@@ -123,10 +121,5 @@ public class SnowWeatherDB {
         }
 
         return countyList;
-    }
-
-    public void cleanCounty()
-    {
-        sqLiteDatabase.delete("County", null, null);
     }
 }

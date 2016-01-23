@@ -53,6 +53,8 @@ public class ChooseAreaActivity extends Activity {
 
     private ProgressDialog progressDialog;
 
+    private boolean extra_city_click;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +70,7 @@ public class ChooseAreaActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.choose_area_activity);
 
+        extra_city_click = false;
         snowWeatherDB = SnowWeatherDB.getInstance(this);
         area_name_textview = (TextView) findViewById(R.id.area_name_textview);
         choose_area_listview = (ListView) findViewById(R.id.choose_area_listview);
@@ -80,13 +83,26 @@ public class ChooseAreaActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (current_level == PROVINCE_LEVEL) {
                     select_province = provinceList.get(position);
+                    String province_name = select_province.getProvince_name();
+                    if (province_name.equals("北京") || province_name.equals("天津") || province_name.equals("上海") || province_name.equals("重庆")
+                            || province_name.equals("香港") || province_name.equals("澳门") || province_name.equals("台湾")) {
+                        extra_city_click = true;
+                    }
                     queryCity();
                 } else if (current_level == CITY_LEVEL) {
                     select_city = cityList.get(position);
-                    queryCounty();
+                    if (extra_city_click) {
+                        String weather_code = select_province.getProvince_code();
+                        String weather_url = select_city.getCity_code();
+                        WeatherInfoActivity.startWeatherActivity(ChooseAreaActivity.this, weather_code, weather_url);
+                        finish();
+                    } else {
+                        queryCounty();
+                    }
                 } else if (current_level == COUNTY_LEVEL) {
-                    String county_code = countyList.get(position).getCounty_code();
-                    WeatherInfoActivity.startWeatherActivity(ChooseAreaActivity.this, county_code);
+                    String weather_code = select_city.getCity_code();
+                    String weather_url = countyList.get(position).getCounty_code();
+                    WeatherInfoActivity.startWeatherActivity(ChooseAreaActivity.this, weather_code, weather_url);
                     finish();
                 }
             }
@@ -97,8 +113,8 @@ public class ChooseAreaActivity extends Activity {
 
     private void queryProvince() {
         provinceList = snowWeatherDB.loadProvince();
-        choose_area_list.clear();
         if (provinceList.size() > 0) {
+            choose_area_list.clear();
             for (Province p : provinceList) {
                 choose_area_list.add(p.getProvince_name());
             }
@@ -113,9 +129,9 @@ public class ChooseAreaActivity extends Activity {
 
     private void queryCity() {
         cityList = snowWeatherDB.loadCity(select_province.getId());
-        choose_area_list.clear();
 
         if (cityList.size() > 0) {
+            choose_area_list.clear();
             for (City c : cityList) {
                 choose_area_list.add(c.getCity_name());
             }
@@ -130,9 +146,9 @@ public class ChooseAreaActivity extends Activity {
 
     private void queryCounty() {
         countyList = snowWeatherDB.loadCounty(select_city.getId());
-        choose_area_list.clear();
 
         if (countyList.size() > 0) {
+            choose_area_list.clear();
             for (County co : countyList) {
                 choose_area_list.add(co.getCounty_name());
             }
@@ -161,7 +177,7 @@ public class ChooseAreaActivity extends Activity {
                 if (type.equals("Province")) {
                     result = HandleHTTPResponse.handleProvinceResponse(response, snowWeatherDB);
                 } else if (type.equals("City")) {
-                    result = HandleHTTPResponse.handleCityResponse(response, select_province.getId(), snowWeatherDB);
+                    result = HandleHTTPResponse.handleCityResponse(response, select_province.getId(), snowWeatherDB, extra_city_click);
                 } else if (type.equals("County")) {
                     result = HandleHTTPResponse.handleCountyResponse(response, select_city.getId(), snowWeatherDB);
                 }
@@ -190,7 +206,6 @@ public class ChooseAreaActivity extends Activity {
                     public void run() {
                         closeProgressDialog();
                         Toast.makeText(ChooseAreaActivity.this, "加载失败,请检查网络设置", Toast.LENGTH_SHORT).show();
-                        snowWeatherDB.cleanCity();
                         queryProvince();
                     }
                 });
@@ -216,10 +231,8 @@ public class ChooseAreaActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (current_level == COUNTY_LEVEL) {
-            snowWeatherDB.cleanCounty();
             queryCity();
         } else if (current_level == CITY_LEVEL) {
-            snowWeatherDB.cleanCity();
             queryProvince();
         } else {
             finish();

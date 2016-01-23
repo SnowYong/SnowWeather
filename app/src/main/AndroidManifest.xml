@@ -1,15 +1,18 @@
 <manifest
     package="com.snow.app.snowweather"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="2.0">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/app_logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activity.ChooseAreaActivity">
+        <activity
+            android:name=".activity.ChooseAreaActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -17,7 +20,6 @@
         </activity>
 
         <activity android:name=".activity.WeatherInfoActivity"></activity>
-
     </application>
 
 </manifest>
