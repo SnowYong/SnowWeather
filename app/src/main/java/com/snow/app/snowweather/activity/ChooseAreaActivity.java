@@ -78,6 +78,13 @@ public class ChooseAreaActivity extends Activity {
         choose_area_listview.setAdapter(choose_area_adapter);
         choose_area_listview.setFocusable(true);
         choose_area_listview.setFocusableInTouchMode(true);
+
+        listviewClickEvent();
+
+        queryProvince();
+    }
+
+    private void listviewClickEvent() {
         choose_area_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -107,8 +114,6 @@ public class ChooseAreaActivity extends Activity {
                 }
             }
         });
-
-        queryProvince();
     }
 
     private void queryProvince() {

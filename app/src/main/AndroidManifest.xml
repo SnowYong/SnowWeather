@@ -1,8 +1,8 @@
 <manifest
     package="com.snow.app.snowweather"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:versionCode="1"
-    android:versionName="2.0">
+    android:versionCode="3"
+    android:versionName="3.0">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
@@ -20,6 +20,14 @@
         </activity>
 
         <activity android:name=".activity.WeatherInfoActivity"></activity>
+
+        <activity android:name=".activity.WeatherSettingActivity"></activity>
+        <activity
+            android:name=".activity.WeatherTimesListActivity"
+            android:theme="@android:style/Theme.Dialog"></activity>
+
+        <service android:name=".service.UpdateWeatherInfoService"></service>
+        <receiver android:name=".receiver.UpdateWeatherInfoReceiver"></receiver>
     </application>
 
 </manifest>

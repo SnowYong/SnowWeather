@@ -12,6 +12,7 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.snow.app.snowweather.R;
 import com.snow.app.snowweather.db.SnowWeatherDB;
@@ -28,7 +29,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     private TextView weather_name_textview, weather_ptime_textview, weather_current_date,
             weather_desp_textview, weather_temp1_textview, weather_temp2_textview;
     private TextView weather_tempnow_textview, weather_extra_textview;
-    private ImageButton weather_rechoose_btn, weather_update_btn;
+    private ImageButton weather_rechoose_btn, weather_update_btn, weather_setting_btn;
     private boolean click_flag;
 
     @Override
@@ -37,20 +38,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.weather_info_activity);
 
-        weather_name_textview = (TextView) findViewById(R.id.weather_name_textview);
-        weather_ptime_textview = (TextView) findViewById(R.id.weather_ptime_textview);
-        weather_info_layout = (LinearLayout) findViewById(R.id.weather_info_layout);
-        weather_temp_vary_layout = (LinearLayout) findViewById(R.id.weather_temp_vary_layout);
-        weather_current_date = (TextView) findViewById(R.id.weather_current_date);
-        weather_desp_textview = (TextView) findViewById(R.id.weather_desp_textview);
-        weather_temp1_textview = (TextView) findViewById(R.id.weather_temp1_textview);
-        weather_temp2_textview = (TextView) findViewById(R.id.weather_temp2_textview);
-        weather_tempnow_textview = (TextView) findViewById(R.id.weather_tempnow_textview);
-        weather_extra_textview = (TextView) findViewById(R.id.weather_extra_textview);
-        weather_rechoose_btn = (ImageButton) findViewById(R.id.weather_rechoose_btn);
-        weather_update_btn = (ImageButton) findViewById(R.id.weather_update_btn);
-        weather_rechoose_btn.setOnClickListener(this);
-        weather_update_btn.setOnClickListener(this);
+        widgetInit();
 
         String county_code = getIntent().getStringExtra("county_code");
         String county_url = getIntent().getStringExtra("county_url");
@@ -65,8 +53,39 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
             showWeather();
         }
 
-        Intent intent = new Intent(WeatherInfoActivity.this, UpdateWeatherInfoService.class);
-        startService(intent);
+        serviceInit();
+    }
+
+    private void widgetInit() {
+        weather_name_textview = (TextView) findViewById(R.id.weather_name_textview);
+        weather_ptime_textview = (TextView) findViewById(R.id.weather_ptime_textview);
+        weather_info_layout = (LinearLayout) findViewById(R.id.weather_info_layout);
+        weather_temp_vary_layout = (LinearLayout) findViewById(R.id.weather_temp_vary_layout);
+        weather_current_date = (TextView) findViewById(R.id.weather_current_date);
+        weather_desp_textview = (TextView) findViewById(R.id.weather_desp_textview);
+        weather_temp1_textview = (TextView) findViewById(R.id.weather_temp1_textview);
+        weather_temp2_textview = (TextView) findViewById(R.id.weather_temp2_textview);
+        weather_tempnow_textview = (TextView) findViewById(R.id.weather_tempnow_textview);
+        weather_extra_textview = (TextView) findViewById(R.id.weather_extra_textview);
+        weather_rechoose_btn = (ImageButton) findViewById(R.id.weather_rechoose_btn);
+        weather_update_btn = (ImageButton) findViewById(R.id.weather_update_btn);
+        weather_setting_btn = (ImageButton) findViewById(R.id.weather_setting_btn);
+        weather_rechoose_btn.setOnClickListener(this);
+        weather_update_btn.setOnClickListener(this);
+        weather_setting_btn.setOnClickListener(this);
+    }
+
+    private void serviceInit() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        int updateTime = sharedPreferences.getInt("update_time", 8);
+        boolean serviceFlag = sharedPreferences.getBoolean("service_flag", true);
+
+        if (serviceFlag) {
+            Intent updateIntent = new Intent(WeatherInfoActivity.this, UpdateWeatherInfoService.class);
+            stopService(updateIntent);
+            updateIntent.putExtra("update_times", updateTime);
+            startService(updateIntent);
+        }
     }
 
     private void queryWeatherInfo(final String code, final String url) {
@@ -156,6 +175,11 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
                     updateWeatherWithTouchingHand();
                 }
                 break;
+            case R.id.weather_setting_btn:
+                Intent intent = new Intent(this, WeatherSettingActivity.class);
+                startActivityForResult(intent, 1);
+                break;
+
             default:
                 break;
         }
@@ -171,5 +195,45 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         weather_temp_vary_layout.setVisibility(View.INVISIBLE);
         weather_ptime_textview.setText("正在同步中...");
         queryWeatherInfo(county_code, county_url);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case 1:
+                if (resultCode == RESULT_OK) {
+                    boolean serviceFlag = data.getBooleanExtra("service_flag", false);
+                    int times = data.getIntExtra("back_result", 8);
+                    Intent updateIntent = new Intent(this, UpdateWeatherInfoService.class);
+                    if (!serviceFlag) {
+                        stopService(updateIntent);
+                    } else {
+                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+                        int isChosenTimes = sharedPreferences.getInt("update_time", 8);
+                        if (isChosenTimes != times) {
+                            stopService(updateIntent);
+                        }
+                        updateIntent.putExtra("update_times", times);
+                        startService(updateIntent);
+                    }
+
+                    saveUpdateInfoToPrfs(serviceFlag, times);
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private void saveUpdateInfoToPrfs(boolean serviceFlag, int times) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        editor.putBoolean("service_flag", serviceFlag);
+        editor.putInt("update_time", times);
+        editor.commit();
     }
 }

@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.snow.app.snowweather.receiver.UpdateWeatherInfoReceiver;
 import com.snow.app.snowweather.util.HTTPCallBackListener;
@@ -19,6 +20,11 @@ import com.snow.app.snowweather.util.HandleHTTPResponse;
  * Created by Administrator on 2016.01.23.
  */
 public class UpdateWeatherInfoService extends Service {
+    private AlarmManager alarmManager;
+    private PendingIntent pendingIntent;
+    private Intent i;
+
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -34,11 +40,12 @@ public class UpdateWeatherInfoService extends Service {
             }
         }).start();
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        int last_time = 8 * 60 * 60 * 1000;
+        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        int update_times = intent.getIntExtra("update_times", 8);
+        int last_time = update_times * 60 * 60 * 1000;
         long triggerAtTime = SystemClock.elapsedRealtime() + last_time;
-        Intent i = new Intent(UpdateWeatherInfoService.this, UpdateWeatherInfoReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
+        i = new Intent(UpdateWeatherInfoService.this, UpdateWeatherInfoReceiver.class);
+        pendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
         alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pendingIntent);
         return super.onStartCommand(intent, flags, startId);
     }
@@ -60,5 +67,11 @@ public class UpdateWeatherInfoService extends Service {
                 e.printStackTrace();
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        alarmManager.cancel(pendingIntent);
     }
 }
