@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.snow.app.snowweather.model.City;
 import com.snow.app.snowweather.model.County;
 import com.snow.app.snowweather.model.Province;
+import com.snow.app.snowweather.model.Weather;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,5 +122,57 @@ public class SnowWeatherDB {
         }
 
         return countyList;
+    }
+
+    public void saveWeather(Weather weather) {
+        if (weather != null) {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put("weather_cityName", weather.getCity_name());
+            contentValues.put("weather_temp1", weather.getWeather_temp1());
+            contentValues.put("weather_temp2", weather.getWeather_temp2());
+            contentValues.put("weather_tempNow", weather.getWeather_temnow());
+            contentValues.put("weather_date", weather.getWeather_current_date());
+            contentValues.put("weather_publishTime", weather.getWeather_ptime());
+            contentValues.put("weather_description", weather.getWeather_desp());
+            contentValues.put("weather_humidity", weather.getHumidity());
+            contentValues.put("weather_windPower", weather.getWindPower());
+            contentValues.put("weather_windDir", weather.getWindDir());
+            contentValues.put("weather_citySelected", weather.getCity_selected());
+            contentValues.put("weather_code", weather.getWeather_code());
+            contentValues.put("weather_url", weather.getWeather_url());
+            sqLiteDatabase.insert("Weather", null, contentValues);
+        }
+    }
+
+    public List<Weather> loadWeather(String weatherCode, String weatherUrl) {
+        List<Weather> weatherList = new ArrayList<Weather>();
+
+        Cursor cursor = sqLiteDatabase.query("Weather", null, "weather_code = ? and weather_url = ?",
+                new String[]{weatherCode, weatherUrl}, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Weather weather = new Weather();
+                weather.setId(cursor.getInt(cursor.getColumnIndex("id")));
+                weather.setCity_name(cursor.getString(cursor.getColumnIndex("weather_cityName")));
+                weather.setWeather_temp1(cursor.getString(cursor.getColumnIndex("weather_temp1")));
+                weather.setWeather_temp2(cursor.getString(cursor.getColumnIndex("weather_temp2")));
+                weather.setWeather_temnow(cursor.getString(cursor.getColumnIndex("weather_tempNow")));
+                weather.setWeather_current_date(cursor.getString(cursor.getColumnIndex("weather_date")));
+                weather.setWeather_ptime(cursor.getString(cursor.getColumnIndex("weather_publishTime")));
+                weather.setWeather_desp(cursor.getString(cursor.getColumnIndex("weather_description")));
+                weather.setHumidity(cursor.getString(cursor.getColumnIndex("weather_humidity")));
+                weather.setWindPower(cursor.getString(cursor.getColumnIndex("weather_windPower")));
+                weather.setWindDir(cursor.getString(cursor.getColumnIndex("weather_windDir")));
+                weather.setCity_selected(cursor.getInt(cursor.getColumnIndex("weather_citySelected")));
+                weather.setWeather_code(cursor.getString(cursor.getColumnIndex("weather_code")));
+                weather.setWeather_url(cursor.getString(cursor.getColumnIndex("weather_url")));
+
+                weatherList.add(weather);
+            }
+            while (cursor.moveToNext());
+        }
+
+        return weatherList;
     }
 }

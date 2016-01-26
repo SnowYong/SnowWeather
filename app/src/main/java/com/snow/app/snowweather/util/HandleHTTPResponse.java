@@ -9,6 +9,7 @@ import com.snow.app.snowweather.db.SnowWeatherDB;
 import com.snow.app.snowweather.model.City;
 import com.snow.app.snowweather.model.County;
 import com.snow.app.snowweather.model.Province;
+import com.snow.app.snowweather.model.Weather;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -200,14 +201,13 @@ public class HandleHTTPResponse {
 //    }
 
 
-    public static void handleWeatherResponse(Context context, String response, String url) {
+    public static boolean handleWeatherResponse(String response, String code, String url, SnowWeatherDB snowWeatherDB) {
         try {
             if (!TextUtils.isEmpty(response)) {
                 XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
                 XmlPullParser xmlPullParser = factory.newPullParser();
                 xmlPullParser.setInput(new StringReader(response));
                 int event_type = xmlPullParser.getEventType();
-                String weather_code_init = xmlPullParser.getName();
 
                 while (event_type != XmlPullParser.END_DOCUMENT) {
                     String node_name = xmlPullParser.getName();
@@ -215,19 +215,22 @@ public class HandleHTTPResponse {
                         case XmlPullParser.START_TAG: {
                             if (node_name.equals("city")) {
                                 if (xmlPullParser.getAttributeValue(null, "url").equals(url)) {
-                                    String city_name = xmlPullParser.getAttributeValue(null, "cityname");
-                                    String weather_code = weather_code_init;
-                                    String county_url = url;
-                                    String weather_temp1 = xmlPullParser.getAttributeValue(null, "tem1");
-                                    String weather_temp2 = xmlPullParser.getAttributeValue(null, "tem2");
-                                    String weather_temnow = xmlPullParser.getAttributeValue(null, "temNow");
-                                    String weather_desp = xmlPullParser.getAttributeValue(null, "stateDetailed");
-                                    String humidity = xmlPullParser.getAttributeValue(null, "humidity");
-                                    String windPower = xmlPullParser.getAttributeValue(null, "windPower");
-                                    String windDir = xmlPullParser.getAttributeValue(null, "windDir");
-                                    String weather_ptime = xmlPullParser.getAttributeValue(null, "time");
-                                    saveWeatherInfo(context, city_name, weather_code, county_url, weather_temp1, weather_temp2,
-                                            weather_temnow, weather_desp, humidity, windPower, windDir, weather_ptime);
+                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年M月d日", Locale.CHINA);
+                                    Weather weather = new Weather();
+                                    weather.setCity_name(xmlPullParser.getAttributeValue(null, "cityname"));
+                                    weather.setWeather_temp1(xmlPullParser.getAttributeValue(null, "tem1"));
+                                    weather.setWeather_temp2(xmlPullParser.getAttributeValue(null, "tem2"));
+                                    weather.setWeather_temnow(xmlPullParser.getAttributeValue(null, "temNow"));
+                                    weather.setWeather_current_date(simpleDateFormat.format(new Date()));
+                                    weather.setWeather_ptime(xmlPullParser.getAttributeValue(null, "time"));
+                                    weather.setWeather_desp(xmlPullParser.getAttributeValue(null, "stateDetailed"));
+                                    weather.setHumidity(xmlPullParser.getAttributeValue(null, "humidity"));
+                                    weather.setWindPower(xmlPullParser.getAttributeValue(null, "windPower"));
+                                    weather.setWindDir(xmlPullParser.getAttributeValue(null, "windDir"));
+                                    weather.setCity_selected(1);
+                                    weather.setWeather_code(code);
+                                    weather.setWeather_url(url);
+                                    snowWeatherDB.saveWeather(weather);
                                 }
                             }
                             break;
@@ -245,29 +248,11 @@ public class HandleHTTPResponse {
                     event_type = xmlPullParser.next();
                 }
             }
+
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-    }
-
-    private static void saveWeatherInfo(Context context, String city_name, String weather_code, String county_url, String weather_temp1, String weather_temp2,
-                                        String weather_temnow, String weather_desp, String humidity, String windPower, String windDir, String weather_ptime) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年M月d日", Locale.CHINA);
-        SharedPreferences.Editor editor = PreferenceManager
-                .getDefaultSharedPreferences(context).edit();
-        editor.putString("city_name", city_name);
-        editor.putString("weather_code", weather_code);
-        editor.putString("county_url", county_url);
-        editor.putString("weather_temp1", weather_temp1);
-        editor.putString("weather_temp2", weather_temp2);
-        editor.putString("weather_tempnow", weather_temnow);
-        editor.putString("weather_desp", weather_desp);
-        editor.putString("humidity", humidity);
-        editor.putString("windPower", windPower);
-        editor.putString("windDir", windDir);
-        editor.putString("weather_ptime", weather_ptime);
-        editor.putString("weather_current_date", simpleDateFormat.format(new Date()));
-        editor.putBoolean("city_selected", true);
-        editor.commit();
     }
 }

@@ -64,7 +64,6 @@ public class ChooseAreaActivity extends Activity {
             Intent intent = new Intent(ChooseAreaActivity.this, WeatherInfoActivity.class);
             startActivity(intent);
             finish();
-            return;
         }
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -91,8 +90,10 @@ public class ChooseAreaActivity extends Activity {
                 if (current_level == PROVINCE_LEVEL) {
                     select_province = provinceList.get(position);
                     String province_name = select_province.getProvince_name();
-                    if (province_name.equals("北京") || province_name.equals("天津") || province_name.equals("上海") || province_name.equals("重庆")
-                            || province_name.equals("香港") || province_name.equals("澳门") || province_name.equals("台湾")) {
+                    if (province_name.equals("北京") || province_name.equals("天津")
+                            || province_name.equals("上海") || province_name.equals("重庆")
+                            || province_name.equals("香港") || province_name.equals("澳门")
+                            || province_name.equals("台湾") || province_name.equals("海南")) {
                         extra_city_click = true;
                     }
                     queryCity();
@@ -211,7 +212,6 @@ public class ChooseAreaActivity extends Activity {
                     public void run() {
                         closeProgressDialog();
                         Toast.makeText(ChooseAreaActivity.this, "加载失败,请检查网络设置", Toast.LENGTH_SHORT).show();
-                        queryProvince();
                     }
                 });
             }

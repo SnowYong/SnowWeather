@@ -45,7 +45,7 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean savedServiceFlag = sharedPreferences.getBoolean("service_flag", true);
-        String savedText = "每" + sharedPreferences.getInt("update_time", 8) + "小时";
+        String savedText = "每" + sharedPreferences.getInt("update_time", 1) + "小时";
 
         if (savedServiceFlag) {
             weather_update_switch.setChecked(true);

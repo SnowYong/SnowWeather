@@ -9,8 +9,10 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
+import com.snow.app.snowweather.db.SnowWeatherDB;
 import com.snow.app.snowweather.receiver.UpdateWeatherInfoReceiver;
 import com.snow.app.snowweather.util.HTTPCallBackListener;
 import com.snow.app.snowweather.util.HTTPUtil;
@@ -23,7 +25,14 @@ public class UpdateWeatherInfoService extends Service {
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
     private Intent i;
+    private SnowWeatherDB snowWeatherDB;
+    private String weatherCode;
+    private String weatherUrl;
 
+    @Override
+    public void onCreate() {
+        snowWeatherDB = SnowWeatherDB.getInstance(this);
+    }
 
     @Nullable
     @Override
@@ -41,7 +50,7 @@ public class UpdateWeatherInfoService extends Service {
         }).start();
 
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        int update_times = intent.getIntExtra("update_times", 8);
+        int update_times = intent.getIntExtra("update_times", 1);
         int last_time = update_times * 60 * 60 * 1000;
         long triggerAtTime = SystemClock.elapsedRealtime() + last_time;
         i = new Intent(UpdateWeatherInfoService.this, UpdateWeatherInfoReceiver.class);
@@ -52,14 +61,17 @@ public class UpdateWeatherInfoService extends Service {
 
     private void updateWeatherInfo() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        final String county_url = sharedPreferences.getString("county_url", "");
+        weatherUrl = sharedPreferences.getString("weather_url", "");
+        weatherCode = sharedPreferences.getString("weather_code", "");
         final String address = "http://flash.weather.com.cn/wmaps/xml/"
-                + sharedPreferences.getString("weather_code", "") + ".xml";
+                + weatherCode + ".xml";
 
         HTTPUtil.sendRequest(address, new HTTPCallBackListener() {
             @Override
             public void onFinish(String response) {
-                HandleHTTPResponse.handleWeatherResponse(getApplicationContext(), response, county_url);
+                if (!TextUtils.isEmpty(response)) {
+                    HandleHTTPResponse.handleWeatherResponse(response, weatherCode, weatherUrl, snowWeatherDB);
+                }
             }
 
             @Override
@@ -71,7 +83,7 @@ public class UpdateWeatherInfoService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         alarmManager.cancel(pendingIntent);
+        updateWeatherInfo();
     }
 }

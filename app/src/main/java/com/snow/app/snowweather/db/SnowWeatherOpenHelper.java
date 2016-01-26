@@ -25,6 +25,22 @@ public class SnowWeatherOpenHelper extends SQLiteOpenHelper {
             + "county_code text,"
             + "city_id integer)";
 
+    private static final String CREATE_WEATHERINFO = "create table Weather ("
+            + "id integer primary key autoincrement,"
+            + "weather_cityName text,"
+            + "weather_temp1 text,"
+            + "weather_temp2 text,"
+            + "weather_tempNow text,"
+            + "weather_date text,"
+            + "weather_publishTime text,"
+            + "weather_description text,"
+            + "weather_humidity text,"
+            + "weather_windPower text,"
+            + "weather_windDir text,"
+            + "weather_citySelected integer,"
+            + "weather_code text,"
+            + "weather_url text)";
+
     public SnowWeatherOpenHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
     }
@@ -34,10 +50,15 @@ public class SnowWeatherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_PROVINCE);
         db.execSQL(CREATE_CITY);
         db.execSQL(CREATE_COUNTY);
+        db.execSQL(CREATE_WEATHERINFO);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+        switch (oldVersion) {
+            case 1:
+            case 2:
+            default:
+        }
     }
 }

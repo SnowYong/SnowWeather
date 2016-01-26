@@ -10,16 +10,20 @@ import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.snow.app.snowweather.R;
 import com.snow.app.snowweather.db.SnowWeatherDB;
+import com.snow.app.snowweather.model.Weather;
 import com.snow.app.snowweather.service.UpdateWeatherInfoService;
 import com.snow.app.snowweather.util.HTTPCallBackListener;
 import com.snow.app.snowweather.util.HTTPUtil;
 import com.snow.app.snowweather.util.HandleHTTPResponse;
+
+import java.util.List;
 
 /**
  * Created by Administrator on 2016.01.18.
@@ -30,7 +34,14 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
             weather_desp_textview, weather_temp1_textview, weather_temp2_textview;
     private TextView weather_tempnow_textview, weather_extra_textview;
     private ImageButton weather_rechoose_btn, weather_update_btn, weather_setting_btn;
-    private boolean click_flag;
+    private ImageView weather_ptime_imageview;
+
+    private List<Weather> weatherList;
+    private SnowWeatherDB snowWeatherDB;
+
+    private Weather currentWeather;
+    private String currentCode;
+    private String currentUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,33 +51,48 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
 
         widgetInit();
 
-        String county_code = getIntent().getStringExtra("county_code");
-        String county_url = getIntent().getStringExtra("county_url");
-        if (!TextUtils.isEmpty(county_code)) {
-            weather_name_textview.setVisibility(View.INVISIBLE);
-            weather_info_layout.setVisibility(View.INVISIBLE);
-            weather_temp_vary_layout.setVisibility(View.INVISIBLE);
-            weather_ptime_textview.setText("正在同步中...");
-            click_flag = true;
-            queryWeatherInfo(county_code, county_url);
+        snowWeatherDB = SnowWeatherDB.getInstance(this);
+        currentCode = getIntent().getStringExtra("weather_code");
+        currentUrl = getIntent().getStringExtra("weather_url");
+        if (!TextUtils.isEmpty(currentCode) && !TextUtils.isEmpty(currentUrl)) {
+            seekingWeatherInfoShow();
+            queryWeather();
         } else {
-            showWeather();
+            SharedPreferences sharedPreferences = PreferenceManager
+                    .getDefaultSharedPreferences(this);
+            currentCode = sharedPreferences.getString("weather_code", "");
+            currentUrl = sharedPreferences.getString("weather_url", "");
+            queryWeather();
         }
 
         serviceInit();
     }
 
+    private void seekingWeatherInfoShow() {
+        weather_ptime_imageview.setVisibility(View.INVISIBLE);
+        weather_name_textview.setVisibility(View.INVISIBLE);
+        weather_current_date.setVisibility(View.INVISIBLE);
+        weather_info_layout.setVisibility(View.INVISIBLE);
+        weather_temp_vary_layout.setVisibility(View.INVISIBLE);
+        weather_ptime_textview.setText("正在同步中...");
+    }
+
     private void widgetInit() {
         weather_name_textview = (TextView) findViewById(R.id.weather_name_textview);
         weather_ptime_textview = (TextView) findViewById(R.id.weather_ptime_textview);
+
         weather_info_layout = (LinearLayout) findViewById(R.id.weather_info_layout);
         weather_temp_vary_layout = (LinearLayout) findViewById(R.id.weather_temp_vary_layout);
+
         weather_current_date = (TextView) findViewById(R.id.weather_current_date);
+        weather_ptime_imageview = (ImageView) findViewById(R.id.weather_ptime_imageview);
+
         weather_desp_textview = (TextView) findViewById(R.id.weather_desp_textview);
         weather_temp1_textview = (TextView) findViewById(R.id.weather_temp1_textview);
         weather_temp2_textview = (TextView) findViewById(R.id.weather_temp2_textview);
         weather_tempnow_textview = (TextView) findViewById(R.id.weather_tempnow_textview);
         weather_extra_textview = (TextView) findViewById(R.id.weather_extra_textview);
+
         weather_rechoose_btn = (ImageButton) findViewById(R.id.weather_rechoose_btn);
         weather_update_btn = (ImageButton) findViewById(R.id.weather_update_btn);
         weather_setting_btn = (ImageButton) findViewById(R.id.weather_setting_btn);
@@ -77,7 +103,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
 
     private void serviceInit() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        int updateTime = sharedPreferences.getInt("update_time", 8);
+        int updateTime = sharedPreferences.getInt("update_time", 1);
         boolean serviceFlag = sharedPreferences.getBoolean("service_flag", true);
 
         if (serviceFlag) {
@@ -88,21 +114,41 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         }
     }
 
-    private void queryWeatherInfo(final String code, final String url) {
-        String address = "http://flash.weather.com.cn/wmaps/xml/" + code + ".xml";
+    private void queryWeather() {
+        weatherList = snowWeatherDB.loadWeather(currentCode, currentUrl);
+        if (weatherList.size() > 0) {
+            for (Weather w : weatherList) {
+                currentWeather = w;
+            }
+
+            showWeather();
+            saveWeatherInfoToPrfs(this);
+        } else {
+            queryFromServer(currentCode);
+        }
+    }
+
+    private void queryFromServer(String weatherCode) {
+        String address = "";
+        if (!TextUtils.isEmpty(weatherCode)) {
+            address = "http://flash.weather.com.cn/wmaps/xml/" + weatherCode + ".xml";
+        }
 
         HTTPUtil.sendRequest(address, new HTTPCallBackListener() {
             @Override
             public void onFinish(String response) {
+                boolean result = false;
                 if (!TextUtils.isEmpty(response)) {
-                    HandleHTTPResponse.handleWeatherResponse(WeatherInfoActivity.this, response, url);
+                    result = HandleHTTPResponse.handleWeatherResponse(response, currentCode, currentUrl, snowWeatherDB);
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            showWeather();
-                        }
-                    });
+                    if (result) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                queryWeather();
+                            }
+                        });
+                    }
                 }
             }
 
@@ -120,48 +166,68 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     }
 
     private void showWeather() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(WeatherInfoActivity.this);
-        weather_name_textview.setText(sharedPreferences.getString("city_name", ""));
 
-        String weather_ptime = sharedPreferences.getString("weather_ptime", "");
+        weather_name_textview.setText(currentWeather.getCity_name());
+
+        weather_current_date.setText(currentWeather.getWeather_current_date());
+        String weather_ptime = currentWeather.getWeather_ptime();
         if (weather_ptime.equals("99:99")) {
             weather_ptime = "12:00";
         }
-        weather_ptime_textview.setText("今日" + weather_ptime + "发布");
+        weather_ptime_textview.setText(weather_ptime + "发布");
 
-        weather_current_date.setText(sharedPreferences.getString("weather_current_date", ""));
-        weather_desp_textview.setText(sharedPreferences.getString("weather_desp", ""));
-        weather_temp1_textview.setText(sharedPreferences.getString("weather_temp1", "") + "℃");
-        weather_temp2_textview.setText(sharedPreferences.getString("weather_temp2", "") + "℃");
-
-        String weather_tempnow = sharedPreferences.getString("weather_tempnow", "");
-        if (weather_tempnow.equals("暂无实况")) {
-            weather_tempnow = sharedPreferences.getString("weather_temp2", "");
+        if (Integer.valueOf(weather_ptime.substring(0, 2)).intValue() < 18) {
+            weather_ptime_imageview.setImageResource(R.drawable.day);
+        } else {
+            weather_ptime_imageview.setImageResource(R.drawable.night);
         }
-        weather_tempnow_textview.setText("当前气温" + weather_tempnow + "℃");
 
-        String windDir = sharedPreferences.getString("windDir", "");
+        weather_desp_textview.setText(currentWeather.getWeather_desp());
+
+        String weather_temp1 = currentWeather.getWeather_temp1();
+        String weather_temp2 = currentWeather.getWeather_temp2();
+        if (Integer.valueOf(weather_temp1) > Integer.valueOf(weather_temp2)) {
+            weather_temp1_textview.setText(weather_temp2 + "℃");
+            weather_temp2_textview.setText(weather_temp1 + "℃");
+        } else {
+            weather_temp1_textview.setText(weather_temp1 + "℃");
+            weather_temp2_textview.setText(weather_temp2 + "℃");
+        }
+
+        String weather_tempnow = currentWeather.getWeather_temnow();
+        if (weather_tempnow.equals("暂无实况")) {
+            weather_tempnow = "当前暂无确切温度信息";
+            weather_tempnow_textview.setText(weather_tempnow);
+        } else {
+            weather_tempnow_textview.setText("当前气温" + weather_tempnow + "℃");
+        }
+
+        String windDir = currentWeather.getWindDir();
         String extra;
         if (windDir.equals("暂无实况")) {
             extra = "当前暂无风向湿度等信息";
         } else {
-            extra = sharedPreferences.getString("windPower", "") + sharedPreferences.getString("windDir", "")
-                    + "   " + "湿度" + sharedPreferences.getString("humidity", "");
+            extra = currentWeather.getWindPower() + currentWeather.getWindDir()
+                    + "   " + "湿度" + currentWeather.getHumidity();
         }
         weather_extra_textview.setText(extra);
 
+        weather_ptime_imageview.setVisibility(View.VISIBLE);
         weather_name_textview.setVisibility(View.VISIBLE);
+        weather_current_date.setVisibility(View.VISIBLE);
         weather_info_layout.setVisibility(View.VISIBLE);
         weather_temp_vary_layout.setVisibility(View.VISIBLE);
-        click_flag = false;
     }
 
-    public static void startWeatherActivity(Context context, String county_code, String county_url) {
-        Intent intent = new Intent(context, WeatherInfoActivity.class);
-        intent.putExtra("county_code", county_code);
-        intent.putExtra("county_url", county_url);
-        context.startActivity(intent);
+    private void saveWeatherInfoToPrfs(Context context) {
+        SharedPreferences.Editor editor = PreferenceManager
+                .getDefaultSharedPreferences(context).edit();
+        editor.putBoolean("city_selected", true);
+        editor.putString("weather_code", currentCode);
+        editor.putString("weather_url", currentUrl);
+        editor.commit();
     }
+
 
     @Override
     public void onClick(View v) {
@@ -171,9 +237,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
                 finish();
                 break;
             case R.id.weather_update_btn:
-                if (!click_flag) {
-                    updateWeatherWithTouchingHand();
-                }
+                updateWeatherWithTouchingHand();
                 break;
             case R.id.weather_setting_btn:
                 Intent intent = new Intent(this, WeatherSettingActivity.class);
@@ -186,16 +250,12 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     }
 
     private void updateWeatherWithTouchingHand() {
-        click_flag = true;
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String county_code = sharedPreferences.getString("weather_code", "");
-        String county_url = sharedPreferences.getString("county_url", "");
-        weather_name_textview.setVisibility(View.INVISIBLE);
-        weather_info_layout.setVisibility(View.INVISIBLE);
-        weather_temp_vary_layout.setVisibility(View.INVISIBLE);
-        weather_ptime_textview.setText("正在同步中...");
-        queryWeatherInfo(county_code, county_url);
+        weather_update_btn.setClickable(false);
+        seekingWeatherInfoShow();
+        queryFromServer(currentCode);
+        weather_update_btn.setClickable(true);
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -205,13 +265,13 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
             case 1:
                 if (resultCode == RESULT_OK) {
                     boolean serviceFlag = data.getBooleanExtra("service_flag", false);
-                    int times = data.getIntExtra("back_result", 8);
+                    int times = data.getIntExtra("back_result", 1);
                     Intent updateIntent = new Intent(this, UpdateWeatherInfoService.class);
                     if (!serviceFlag) {
                         stopService(updateIntent);
                     } else {
                         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-                        int isChosenTimes = sharedPreferences.getInt("update_time", 8);
+                        int isChosenTimes = sharedPreferences.getInt("update_time", 1);
                         if (isChosenTimes != times) {
                             stopService(updateIntent);
                         }
@@ -219,7 +279,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
                         startService(updateIntent);
                     }
 
-                    saveUpdateInfoToPrfs(serviceFlag, times);
+                    saveUpdateServiceInfoToPrfs(serviceFlag, times);
                 }
                 break;
 
@@ -228,7 +288,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         }
     }
 
-    private void saveUpdateInfoToPrfs(boolean serviceFlag, int times) {
+    private void saveUpdateServiceInfoToPrfs(boolean serviceFlag, int times) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
@@ -236,4 +296,12 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         editor.putInt("update_time", times);
         editor.commit();
     }
+
+    public static void startWeatherActivity(Context context, String weatherCode, String weatherUrl) {
+        Intent intent = new Intent(context, WeatherInfoActivity.class);
+        intent.putExtra("weather_code", weatherCode);
+        intent.putExtra("weather_url", weatherUrl);
+        context.startActivity(intent);
+    }
+
 }
