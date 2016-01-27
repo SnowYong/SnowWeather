@@ -26,6 +26,10 @@
             android:name=".activity.WeatherTimesListActivity"
             android:theme="@android:style/Theme.Dialog"></activity>
 
+        <activity
+            android:name=".activity.WeatherTempModeActivity"
+            android:theme="@android:style/Theme.Dialog"></activity>
+
         <service android:name=".service.UpdateWeatherInfoService"></service>
         <receiver android:name=".receiver.UpdateWeatherInfoReceiver"></receiver>
     </application>

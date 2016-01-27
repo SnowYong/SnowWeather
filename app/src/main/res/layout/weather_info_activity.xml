@@ -6,7 +6,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="50dp"
         android:background="@color/colorPrimary"
         android:paddingLeft="10dp"
         android:paddingRight="10dp">
@@ -26,7 +26,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:textSize="30sp"/>
+            android:textColor="#ffffff"
+            android:textSize="25sp"/>
 
 
         <ImageButton
@@ -94,6 +95,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="1"
+                android:textColor="#ffffff"
                 android:gravity="right"
                 android:textSize="20sp"/>
 
@@ -106,6 +108,7 @@
                 android:layout_marginRight="5dp"
                 android:layout_weight="1"
                 android:gravity="center"
+                android:textColor="#ffffff"
                 android:text="@string/weather_temp_divider"
                 android:textSize="18sp"/>
 
@@ -115,6 +118,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="1"
+                android:textColor="#ffffff"
                 android:gravity="left"
                 android:textSize="20sp"/>
         </LinearLayout>
@@ -130,6 +134,7 @@
                 android:id="@+id/weather_desp_textview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textColor="#ffffff"
                 android:gravity="center"
                 android:textSize="35sp"/>
 
@@ -138,7 +143,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="35sp"/>
+                android:textSize="30sp"/>
 
             <TextView
                 android:id="@+id/weather_extra_textview"

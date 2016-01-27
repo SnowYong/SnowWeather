@@ -2,11 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
+              android:background="@color/colorUnderline"
               android:orientation="vertical">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="50dp"
         android:background="@color/colorPrimary">
 
         <TextView
@@ -14,7 +15,8 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="设置"
-            android:textSize="30sp"/>
+            android:textColor="#ffffff"
+            android:textSize="25sp"/>
     </RelativeLayout>
 
     <LinearLayout
@@ -30,7 +32,7 @@
             android:layout_gravity="center"
             android:layout_weight="3"
             android:text="自动更新"
-            android:textSize="24sp"/>
+            android:textSize="20sp"/>
 
         <Switch
             android:id="@+id/weather_update_switch"
@@ -38,8 +40,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_weight="1"
-            android:shadowColor="@color/colorPrimary"/>
+            android:layout_weight="1"/>
     </LinearLayout>
 
     <ImageView
@@ -61,7 +62,7 @@
             android:layout_gravity="center"
             android:layout_weight="3"
             android:text="更新频率"
-            android:textSize="24sp"/>
+            android:textSize="20sp"/>
 
         <TextView
             android:id="@+id/weather_update_times_textview"
@@ -71,6 +72,46 @@
             android:layout_weight="1"
             android:text="每8小时"
             android:textSize="16sp"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="0.2"
+            android:text=">"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/divider"/>
+
+    <LinearLayout
+        android:id="@+id/weather_tempnumbers_mode_layout"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:orientation="horizontal"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="3"
+            android:text="温度单位"
+            android:textSize="20sp"/>
+
+        <TextView
+            android:id="@+id/weather_tempnumbers_mode_textview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:text="℃"
+            android:textSize="18sp"/>
 
         <TextView
             android:layout_width="0dp"

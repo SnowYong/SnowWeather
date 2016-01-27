@@ -62,7 +62,8 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
                     .getDefaultSharedPreferences(this);
             currentCode = sharedPreferences.getString("weather_code", "");
             currentUrl = sharedPreferences.getString("weather_url", "");
-            queryWeather();
+            seekingWeatherInfoShow();
+            queryFromServer(currentCode);
         }
 
         serviceInit();
@@ -184,23 +185,37 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
 
         weather_desp_textview.setText(currentWeather.getWeather_desp());
 
+        String weather_tempnow = currentWeather.getWeather_temnow();
         String weather_temp1 = currentWeather.getWeather_temp1();
         String weather_temp2 = currentWeather.getWeather_temp2();
         if (Integer.valueOf(weather_temp1) > Integer.valueOf(weather_temp2)) {
             weather_temp1_textview.setText(weather_temp2 + "℃");
             weather_temp2_textview.setText(weather_temp1 + "℃");
+            setCorrectTempInfo(weather_tempnow, weather_temp2, weather_temp1);
         } else {
             weather_temp1_textview.setText(weather_temp1 + "℃");
             weather_temp2_textview.setText(weather_temp2 + "℃");
+            setCorrectTempInfo(weather_tempnow, weather_temp1, weather_temp2);
+        }
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String tempMode = sharedPreferences.getString("temp_mode", "℃");
+        if (tempMode.equals("℉")) {
+            setCorretTempMode(weather_temp1_textview.getText().toString(),
+                    weather_temp2_textview.getText().toString());
         }
 
-        String weather_tempnow = currentWeather.getWeather_temnow();
         if (weather_tempnow.equals("暂无实况")) {
             weather_tempnow = "当前暂无确切温度信息";
             weather_tempnow_textview.setText(weather_tempnow);
         } else {
             weather_tempnow_textview.setText("当前气温" + weather_tempnow + "℃");
+            if (tempMode.equals("℉")) {
+                int tempNowHSMode = (int) (Integer.valueOf(weather_tempnow).intValue() * 1.8 + 32);
+                weather_tempnow_textview.setText("当前气温" + tempNowHSMode + "℉");
+            }
+            weather_tempnow_textview.setTextColor(getResources().getColor(R.color.colorUnderline));
         }
+
 
         String windDir = currentWeather.getWindDir();
         String extra;
@@ -217,6 +232,22 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         weather_current_date.setVisibility(View.VISIBLE);
         weather_info_layout.setVisibility(View.VISIBLE);
         weather_temp_vary_layout.setVisibility(View.VISIBLE);
+    }
+
+    private void setCorretTempMode(String tempText1, String tempText2) {
+        int temp1HSMode = (int) (Integer.valueOf(tempText1.replace("℃", "")).intValue() * 1.8 + 32);
+        int temp2HSMode = (int) (Integer.valueOf(tempText2.replace("℃", "")).intValue() * 1.8 + 32);
+        weather_temp1_textview.setText(temp1HSMode + "℉");
+        weather_temp2_textview.setText(temp2HSMode + "℉");
+    }
+
+    private void setCorrectTempInfo(String tempNow, String temp1, String temp2) {
+        if (Integer.valueOf(tempNow) < Integer.valueOf(temp1)) {
+            weather_temp1_textview.setText(tempNow + "℃");
+        }
+        if (Integer.valueOf(tempNow) > Integer.valueOf(temp2)) {
+            weather_temp2_textview.setText(tempNow + "℃");
+        }
     }
 
     private void saveWeatherInfoToPrfs(Context context) {
@@ -257,46 +288,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     }
 
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        switch (requestCode) {
-            case 1:
-                if (resultCode == RESULT_OK) {
-                    boolean serviceFlag = data.getBooleanExtra("service_flag", false);
-                    int times = data.getIntExtra("back_result", 1);
-                    Intent updateIntent = new Intent(this, UpdateWeatherInfoService.class);
-                    if (!serviceFlag) {
-                        stopService(updateIntent);
-                    } else {
-                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-                        int isChosenTimes = sharedPreferences.getInt("update_time", 1);
-                        if (isChosenTimes != times) {
-                            stopService(updateIntent);
-                        }
-                        updateIntent.putExtra("update_times", times);
-                        startService(updateIntent);
-                    }
-
-                    saveUpdateServiceInfoToPrfs(serviceFlag, times);
-                }
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    private void saveUpdateServiceInfoToPrfs(boolean serviceFlag, int times) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        editor.putBoolean("service_flag", serviceFlag);
-        editor.putInt("update_time", times);
-        editor.commit();
-    }
-
     public static void startWeatherActivity(Context context, String weatherCode, String weatherUrl) {
         Intent intent = new Intent(context, WeatherInfoActivity.class);
         intent.putExtra("weather_code", weatherCode);
@@ -304,4 +295,15 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
         context.startActivity(intent);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case 1:
+                showWeather();
+                break;
+
+            default:
+                break;
+        }
+    }
 }
