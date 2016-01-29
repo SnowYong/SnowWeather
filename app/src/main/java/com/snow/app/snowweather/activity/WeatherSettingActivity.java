@@ -147,7 +147,6 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
     }
 
     private void saveUpdateServiceInfoToPrfs() {
-
         boolean flag = serviceFlag;
         int result = getTrueTime(weather_update_times_textview.getText().toString().trim());
         editor.putBoolean("service_flag", flag);
@@ -192,25 +191,36 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
 
             case 2:
                 if (resultCode == RESULT_OK) {
-                    String tempMode = data.getStringExtra("temp_mode");
-                    weather_tempnumbers_mode_textview.setText(tempMode);
-                    editor.putString("temp_mode", tempMode);
-                    editor.commit();
+                    saveUpdateSettingInfoToPrfs(weather_tempnumbers_mode_textview,
+                            data, "temp_mode");
+//                    String tempMode = data.getStringExtra("temp_mode");
+//                    weather_tempnumbers_mode_textview.setText(tempMode);
+//                    editor.putString("temp_mode", tempMode);
+//                    editor.commit();
                 }
                 break;
 
             case 3:
                 if (resultCode == RESULT_OK) {
-                    String dayofweekMode = data.getStringExtra("dayofweek_mode");
-                    weather_dayofweek_mode_textview.setText(dayofweekMode);
-                    editor.putString("dayofweek_mode", dayofweekMode);
-                    editor.commit();
+                    saveUpdateSettingInfoToPrfs(weather_dayofweek_mode_textview,
+                            data, "dayofweek_mode");
+//                    String dayofweekMode = data.getStringExtra("dayofweek_mode");
+//                    weather_dayofweek_mode_textview.setText(dayofweekMode);
+//                    editor.putString("dayofweek_mode", dayofweekMode);
+//                    editor.commit();
                 }
                 break;
 
             default:
                 break;
         }
+    }
+
+    private void saveUpdateSettingInfoToPrfs(TextView view, Intent data, String whichMode) {
+        String mode = data.getStringExtra(whichMode);
+        view.setText(mode);
+        editor.putString(whichMode, mode);
+        editor.commit();
     }
 
 
@@ -232,12 +242,6 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
     public void onBackPressed() {
         saveUpdateServiceInfoToPrfs();
         Intent intent = new Intent();
-//        String tempMode = weather_tempnumbers_mode_textview.getText().toString();
-//        String dayofweekMode = weather_dayofweek_mode_textview.getText().toString();
-//        String dateFormat = (String) weather_date_mode_spinner.getSelectedItem();
-//        intent.putExtra("temp_mode", tempMode);
-//        intent.putExtra("dayofweek_mode", dayofweekMode);
-//        intent.putExtra("date_format", dateFormat);
         setResult(RESULT_OK, intent);
         finish();
     }

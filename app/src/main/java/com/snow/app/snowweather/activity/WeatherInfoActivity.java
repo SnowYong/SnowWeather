@@ -49,12 +49,17 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     private String[] chineseWeek = {"星期天", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
     private String[] foreignWeek = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thirsday", "Friday", "Saturday"};
 
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.weather_info_activity);
 
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = sharedPreferences.edit();
         widgetInit();
 
         snowWeatherDB = SnowWeatherDB.getInstance(this);
@@ -64,8 +69,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
             seekingWeatherInfoShow();
             queryWeather();
         } else {
-            SharedPreferences sharedPreferences = PreferenceManager
-                    .getDefaultSharedPreferences(this);
             currentCode = sharedPreferences.getString("weather_code", "");
             currentUrl = sharedPreferences.getString("weather_url", "");
             seekingWeatherInfoShow();
@@ -118,7 +121,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     }
 
     private void serviceInit() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         int updateTime = sharedPreferences.getInt("update_time", 1);
         boolean serviceFlag = sharedPreferences.getBoolean("service_flag", true);
 
@@ -172,6 +174,7 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
                     @Override
                     public void run() {
                         weather_ptime_textview.setText("同步失败，请检查网络设置");
+                        queryWeather();
                     }
                 });
                 e.printStackTrace();
@@ -201,7 +204,8 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
 
         String weather_ptime = currentWeather.getWeather_ptime();
         if (weather_ptime.equals("99:99")) {
-            weather_ptime = "12:00";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+            weather_ptime = simpleDateFormat.format(new Date());
         }
         weather_ptime_textview.setText(weather_ptime + "发布");
         if (Integer.valueOf(weather_ptime.substring(0, 2)).intValue() < 18) {
@@ -225,7 +229,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
 
     private void showDateInfoView() {
         weather_current_date.setText(currentWeather.getWeather_current_date());
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String dateResult = sharedPreferences.getString("date_format", "yyyy年MM月dd日");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateResult);
         String dateSet = simpleDateFormat.format(new Date());
@@ -233,8 +236,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
     }
 
     private void showWeekInfoView() {
-        SharedPreferences sharedPreferences = PreferenceManager
-                .getDefaultSharedPreferences(this);
         String dayofweekMode = sharedPreferences.getString("dayofweek_mode", "中文星期");
 
         int dayOfWeek = currentWeather.getWeather_current_dayofweek();
@@ -301,7 +302,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
                 setCorrectTempInfo(weather_tempnow, weather_temp1, weather_temp2);
             }
         }
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String tempMode = sharedPreferences.getString("temp_mode", "℃");
         if (tempMode.equals("℉")) {
             setCorretTempMode(weather_temp1_textview.getText().toString(),
@@ -333,8 +333,6 @@ public class WeatherInfoActivity extends Activity implements View.OnClickListene
 
 
     private void saveWeatherInfoToPrfs(Context context) {
-        SharedPreferences.Editor editor = PreferenceManager
-                .getDefaultSharedPreferences(context).edit();
         editor.putBoolean("city_selected", true);
         editor.putString("weather_code", currentCode);
         editor.putString("weather_url", currentUrl);
