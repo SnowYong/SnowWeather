@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">SnowWeather</string>
     <string name="weather_temp_divider">~</string>
+    <string-array name="weather_date_format">
+        <item>yyyy年MM月dd日</item>
+        <item>yyyy-MM-dd</item>
+        <item>yyyy/MM/dd</item>
+        <item>yyyy.MM.dd</item>
+        <item>MM月dd日,yyyy年</item>
+        <item>MM.dd,yyyy</item>
+    </string-array>
 </resources>

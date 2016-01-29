@@ -17,6 +17,9 @@ public class Weather {
     private String windDir;
     private String weather_ptime;
     private String weather_current_date;
+    private int weather_current_dayofweek;
+
+
     private int city_selected;
 
 
@@ -132,4 +135,11 @@ public class Weather {
         this.city_selected = city_selected;
     }
 
+    public int getWeather_current_dayofweek() {
+        return weather_current_dayofweek;
+    }
+
+    public void setWeather_current_dayofweek(int weather_current_dayofweek) {
+        this.weather_current_dayofweek = weather_current_dayofweek;
+    }
 }

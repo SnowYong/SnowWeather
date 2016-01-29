@@ -9,7 +9,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,16 +20,31 @@ import android.widget.Toast;
 import com.snow.app.snowweather.R;
 import com.snow.app.snowweather.service.UpdateWeatherInfoService;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 /**
  * Created by Administrator on 2016.01.24.
  */
-public class WeatherSettingActivity extends Activity implements View.OnClickListener {
+public class WeatherSettingActivity extends Activity implements View.OnClickListener, AdapterView.OnItemSelectedListener {
     private Switch weather_update_switch;
-    private TextView weather_update_times_textview, weather_tempnumbers_mode_textview;
-    private LinearLayout weather_update_times_layout, weather_tempnumbers_mode_layout;
+    private TextView weather_update_times_textview,
+            weather_tempnumbers_mode_textview, weather_dayofweek_mode_textview;
+    private LinearLayout weather_update_times_layout,
+            weather_tempnumbers_mode_layout, weather_dayofweek_mode_layout;
+
+    private Spinner weather_date_mode_spinner;
+    private ArrayAdapter<CharSequence> weather_date_mode_spinner_adapter;
+
 
     private static int backResult;
     private static boolean serviceFlag;
+
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,21 +52,37 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.weather_setting_activity);
 
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        editor = sharedPreferences.edit();
         widgetInit();
 
     }
 
     private void widgetInit() {
         weather_update_switch = (Switch) findViewById(R.id.weather_update_switch);
+
         weather_update_times_textview = (TextView) findViewById(R.id.weather_update_times_textview);
         weather_update_times_layout = (LinearLayout) findViewById(R.id.weather_update_times_layout);
+
         weather_tempnumbers_mode_textview = (TextView) findViewById(R.id.weather_tempnumbers_mode_textview);
         weather_tempnumbers_mode_layout = (LinearLayout) findViewById(R.id.weather_tempnumbers_mode_layout);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        weather_dayofweek_mode_textview = (TextView) findViewById(R.id.weather_dayofweek_mode_textview);
+        weather_dayofweek_mode_layout = (LinearLayout) findViewById(R.id.weather_dayofweek_mode_layout);
+
+        weather_date_mode_spinner = (Spinner) findViewById(R.id.weather_date_mode_spinner);
+        weather_date_mode_spinner_adapter = ArrayAdapter.createFromResource(this,
+                R.array.weather_date_format, android.R.layout.simple_spinner_item);
+        weather_date_mode_spinner_adapter
+                .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        weather_date_mode_spinner.setAdapter(weather_date_mode_spinner_adapter);
+
+
         boolean savedServiceFlag = sharedPreferences.getBoolean("service_flag", true);
         String savedText = "每" + sharedPreferences.getInt("update_time", 1) + "小时";
         String tempMode = sharedPreferences.getString("temp_mode", "℃");
+        String dayofweekMode = sharedPreferences.getString("dayofweek_mode", "中文星期");
+        String dateFormat = sharedPreferences.getString("date_format", "yyyy年MM月dd日");
 
         if (savedServiceFlag) {
             weather_update_switch.setChecked(true);
@@ -58,16 +92,18 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
             serviceFlag = false;
         }
 
-        if (!TextUtils.isEmpty(savedText)) {
-            weather_update_times_textview.setText(savedText);
-        }
-
+        weather_update_times_textview.setText(savedText);
         weather_tempnumbers_mode_textview.setText(tempMode);
+        weather_dayofweek_mode_textview.setText(dayofweekMode);
+        weather_date_mode_spinner.setSelection(weather_date_mode_spinner_adapter.getPosition(dateFormat));
 
         weather_update_switch.setOnClickListener(this);
         weather_update_times_layout.setOnClickListener(this);
         weather_tempnumbers_mode_layout.setOnClickListener(this);
+        weather_dayofweek_mode_layout.setOnClickListener(this);
+        weather_date_mode_spinner.setOnItemSelectedListener(this);
     }
+
 
     @Override
     public void onClick(View v) {
@@ -99,14 +135,18 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
                 startActivityForResult(tempModeIntent, 2);
                 break;
 
+            case R.id.weather_dayofweek_mode_layout:
+                weather_dayofweek_mode_layout.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                Intent dayOfWeekIntent = new Intent(this, WeatherDayofWeekModeActivity.class);
+                startActivityForResult(dayOfWeekIntent, 3);
+                break;
+
             default:
                 break;
         }
     }
 
     private void saveUpdateServiceInfoToPrfs() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
 
         boolean flag = serviceFlag;
         int result = getTrueTime(weather_update_times_textview.getText().toString().trim());
@@ -120,6 +160,7 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
         super.onResume();
         weather_update_times_layout.setBackgroundColor(getResources().getColor(R.color.colorUnderline));
         weather_tempnumbers_mode_layout.setBackgroundColor(getResources().getColor(R.color.colorUnderline));
+        weather_dayofweek_mode_layout.setBackgroundColor(getResources().getColor(R.color.colorUnderline));
     }
 
     @Override
@@ -128,8 +169,6 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
         switch (requestCode) {
             case 1:
                 if (resultCode == RESULT_OK) {
-                    SharedPreferences sharedPreferences = PreferenceManager
-                            .getDefaultSharedPreferences(this);
                     boolean savedServiceFlag = sharedPreferences.getBoolean("service_flag", true);
                     String savedText = "每" + sharedPreferences.getInt("update_time", 1) + "小时";
 
@@ -155,9 +194,16 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
                 if (resultCode == RESULT_OK) {
                     String tempMode = data.getStringExtra("temp_mode");
                     weather_tempnumbers_mode_textview.setText(tempMode);
-                    SharedPreferences.Editor editor = PreferenceManager
-                            .getDefaultSharedPreferences(this).edit();
                     editor.putString("temp_mode", tempMode);
+                    editor.commit();
+                }
+                break;
+
+            case 3:
+                if (resultCode == RESULT_OK) {
+                    String dayofweekMode = data.getStringExtra("dayofweek_mode");
+                    weather_dayofweek_mode_textview.setText(dayofweekMode);
+                    editor.putString("dayofweek_mode", dayofweekMode);
                     editor.commit();
                 }
                 break;
@@ -186,9 +232,25 @@ public class WeatherSettingActivity extends Activity implements View.OnClickList
     public void onBackPressed() {
         saveUpdateServiceInfoToPrfs();
         Intent intent = new Intent();
-        String tempMode = weather_tempnumbers_mode_textview.getText().toString();
-        intent.putExtra("temp_mode", tempMode);
+//        String tempMode = weather_tempnumbers_mode_textview.getText().toString();
+//        String dayofweekMode = weather_dayofweek_mode_textview.getText().toString();
+//        String dateFormat = (String) weather_date_mode_spinner.getSelectedItem();
+//        intent.putExtra("temp_mode", tempMode);
+//        intent.putExtra("dayofweek_mode", dayofweekMode);
+//        intent.putExtra("date_format", dateFormat);
         setResult(RESULT_OK, intent);
         finish();
+    }
+
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String dateFormat = (String) parent.getSelectedItem();
+        editor.putString("date_format", dateFormat);
+        editor.commit();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
     }
 }

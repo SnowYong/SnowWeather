@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
+
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/weather_dayofweek_mode_cn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="中文星期"
+            android:textSize="20sp"/>
+
+        <RadioButton
+            android:id="@+id/weather_dayofweek_mode_en"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Foreign Week"
+            android:textSize="20sp"/>
+    </RadioGroup>
+</LinearLayout>

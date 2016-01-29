@@ -2,7 +2,7 @@
     package="com.snow.app.snowweather"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:versionCode="1"
-    android:versionName="1.5">
+    android:versionName="1.7">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
@@ -28,6 +28,10 @@
 
         <activity
             android:name=".activity.WeatherTempModeActivity"
+            android:theme="@android:style/Theme.Dialog"></activity>
+
+        <activity
+            android:name=".activity.WeatherDayofWeekModeActivity"
             android:theme="@android:style/Theme.Dialog"></activity>
 
         <service android:name=".service.UpdateWeatherInfoService"></service>

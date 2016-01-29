@@ -32,6 +32,7 @@ public class SnowWeatherOpenHelper extends SQLiteOpenHelper {
             + "weather_temp2 text,"
             + "weather_tempNow text,"
             + "weather_date text,"
+            + "weather_dayofweek integer,"
             + "weather_publishTime text,"
             + "weather_description text,"
             + "weather_humidity text,"

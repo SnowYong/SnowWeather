@@ -132,6 +132,7 @@ public class SnowWeatherDB {
             contentValues.put("weather_temp2", weather.getWeather_temp2());
             contentValues.put("weather_tempNow", weather.getWeather_temnow());
             contentValues.put("weather_date", weather.getWeather_current_date());
+            contentValues.put("weather_dayofweek", weather.getWeather_current_dayofweek());
             contentValues.put("weather_publishTime", weather.getWeather_ptime());
             contentValues.put("weather_description", weather.getWeather_desp());
             contentValues.put("weather_humidity", weather.getHumidity());
@@ -159,6 +160,7 @@ public class SnowWeatherDB {
                 weather.setWeather_temp2(cursor.getString(cursor.getColumnIndex("weather_temp2")));
                 weather.setWeather_temnow(cursor.getString(cursor.getColumnIndex("weather_tempNow")));
                 weather.setWeather_current_date(cursor.getString(cursor.getColumnIndex("weather_date")));
+                weather.setWeather_current_dayofweek(cursor.getInt(cursor.getColumnIndex("weather_dayofweek")));
                 weather.setWeather_ptime(cursor.getString(cursor.getColumnIndex("weather_publishTime")));
                 weather.setWeather_desp(cursor.getString(cursor.getColumnIndex("weather_description")));
                 weather.setHumidity(cursor.getString(cursor.getColumnIndex("weather_humidity")));

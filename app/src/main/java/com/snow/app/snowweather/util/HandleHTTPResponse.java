@@ -18,6 +18,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -215,13 +216,20 @@ public class HandleHTTPResponse {
                         case XmlPullParser.START_TAG: {
                             if (node_name.equals("city")) {
                                 if (xmlPullParser.getAttributeValue(null, "url").equals(url)) {
-                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年M月d日", Locale.CHINA);
+                                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日", Locale.CHINA);
+                                    Date date = new Date();
+                                    String currentDate = simpleDateFormat.format(date);
+
+                                    Calendar calendar = Calendar.getInstance();
+                                    int todayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+
                                     Weather weather = new Weather();
                                     weather.setCity_name(xmlPullParser.getAttributeValue(null, "cityname"));
                                     weather.setWeather_temp1(xmlPullParser.getAttributeValue(null, "tem1"));
                                     weather.setWeather_temp2(xmlPullParser.getAttributeValue(null, "tem2"));
                                     weather.setWeather_temnow(xmlPullParser.getAttributeValue(null, "temNow"));
-                                    weather.setWeather_current_date(simpleDateFormat.format(new Date()));
+                                    weather.setWeather_current_date(currentDate);
+                                    weather.setWeather_current_dayofweek(todayOfWeek);
                                     weather.setWeather_ptime(xmlPullParser.getAttributeValue(null, "time"));
                                     weather.setWeather_desp(xmlPullParser.getAttributeValue(null, "stateDetailed"));
                                     weather.setHumidity(xmlPullParser.getAttributeValue(null, "humidity"));
